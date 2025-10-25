@@ -7,15 +7,15 @@ const openai = new OpenAI({
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, productContext } = await req.json();
+const { messages, productContext } = await req.json();
 
-    const systemPrompt = `You are a helpful product specialist for ${productContext.name}. 
-    
+const systemPrompt = `You are a helpful product specialist for ${productContext.name}. 
+
 Product Specifications:
-${productContext.specs.map((s: any) => `- ${s.label}: ${s.value} ${s.unit || ''}`).join('\n')}
+${(productContext.specs as { label: string; value: unknown; unit?: string }[]).map((s) => `- ${s.label}: ${s.value} ${s.unit || ''}`).join('\n')}
 
 Key Features:
-${productContext.features.join('\n')}
+${(productContext.features || []).join('\n')}
 
 Answer questions accurately and concisely. If you don't know something, suggest contacting the sales team.`;
 
@@ -32,8 +32,9 @@ Answer questions accurately and concisely. If you don't know something, suggest 
       max_tokens: 200,
     });
 
+    // FIX: Access the first choice, then the message
     return NextResponse.json({
-      response: completion.choices.message.content,
+      response: completion.choices[0].message.content,
     });
   } catch (error) {
     console.error('AI Chat Error:', error);
