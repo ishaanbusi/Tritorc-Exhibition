@@ -1,0 +1,23 @@
+{
+  "name": "TRITON Interactive Exhibition",
+  "short_name": "TRITON",
+  "description": "Interactive product catalog with QR code scanning",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#D6312F",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "orientation": "any"
+}
