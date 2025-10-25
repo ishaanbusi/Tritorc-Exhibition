@@ -27,9 +27,10 @@ export default function TorqueChart({ product }: TorqueChartProps) {
   // Generate chart data from product specs or selectorData
   const generateTorqueData = () => {
     // Check if we have selectorData with models
-    if (product.selectorData?.models && product.selectorData.technicalData) {
-      return product.selectorData.models.map((model) => {
-        const techData = product.selectorData.technicalData[model];
+    const selectorData = product.selectorData;
+    if (selectorData?.models && selectorData.technicalData) {
+      return selectorData.models.map((model) => {
+        const techData = selectorData.technicalData[model];
         const minTorque = techData?.minTorque?.metric || "0 Nm";
         const maxTorque = techData?.maxTorque?.metric || "0 Nm";
 

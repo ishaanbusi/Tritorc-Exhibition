@@ -1,18 +1,96 @@
 "use client";
 
-import PageEntryAnimation from "@/components/PageEntryAnimation";
-import AmbientBackground from "@/components/AmbientBackground";
-import ImageGallery from "@/components/ImageGallery";
-import ThreeDViewer from "@/components/ThreeDViewer";
-import ARViewer from "@/components/ARViewer";
-import VideoSection from "@/components/VideoSection";
-import SpecificationsTabs from "@/components/SpecificationsTabs";
-import TorqueChart from "@/components/TorqueChart";
-import ComparisonSelect from "@/components/ComparisonSelect";
-import AskAIChat from "@/components/AskAIChat";
-import ExplodedView from "@/components/ExplodedView";
-import { useProductView } from "@/components/MemoryManager";
+import dynamic from "next/dynamic";
 import { FileText, Package } from "lucide-react";
+import { useEffect, useState } from "react";
+
+// Dynamically import components that might use window/browser APIs
+const PageEntryAnimation = dynamic(
+  () => import("@/components/PageEntryAnimation"),
+  {
+    ssr: false,
+  }
+);
+
+const AmbientBackground = dynamic(
+  () => import("@/components/AmbientBackground"),
+  {
+    ssr: false,
+  }
+);
+
+const ImageGallery = dynamic(() => import("@/components/ImageGallery"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[400px] bg-gray-900/50 border border-gray-800 rounded-xl animate-pulse" />
+  ),
+});
+
+const VideoSection = dynamic(() => import("@/components/VideoSection"), {
+  ssr: false,
+});
+
+const SpecificationsTabs = dynamic(
+  () => import("@/components/SpecificationsTabs"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-900/50 border border-gray-800 rounded-xl animate-pulse" />
+    ),
+  }
+);
+
+const ComparisonSelect = dynamic(
+  () => import("@/components/ComparisonSelect"),
+  {
+    ssr: false,
+  }
+);
+
+// Dynamically import components that might use window/browser APIs
+const ThreeDViewer = dynamic(() => import("@/components/ThreeDViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] bg-gradient-to-br from-gray-950 to-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-12 h-12 border-4 border-gray-700 border-t-[#D6212F] rounded-full animate-spin" />
+        <p className="text-white text-sm font-medium">Loading 3D Viewer...</p>
+      </div>
+    </div>
+  ),
+});
+
+const ARViewer = dynamic(() => import("@/components/ARViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-14 bg-gray-900/50 border border-gray-800 rounded-lg animate-pulse" />
+  ),
+});
+
+const TorqueChart = dynamic(() => import("@/components/TorqueChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 bg-gray-950/30 border border-gray-800 rounded-lg animate-pulse" />
+  ),
+});
+
+const ExplodedView = dynamic(() => import("@/components/ExplodedView"), {
+  ssr: false,
+  loading: () => (
+    <div className="relative w-full h-[400px] bg-gradient-to-br from-gray-950 to-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-12 h-12 border-4 border-gray-700 border-t-[#D6212F] rounded-full animate-spin" />
+        <p className="text-white text-sm font-medium">
+          Loading Exploded View...
+        </p>
+      </div>
+    </div>
+  ),
+});
+
+const AskAIChat = dynamic(() => import("@/components/AskAIChat"), {
+  ssr: false,
+});
 
 interface ProductPageClientProps {
   product: any;

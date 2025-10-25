@@ -1,42 +1,67 @@
 import { notFound } from "next/navigation";
-import { getProductBySlug, getAllProducts } from "@/data/products";
+import { getProductBySlug } from "@/data/products";
 import ProductPageClient from "@/components/ProductPageClient";
+import type { Metadata } from "next";
 
-// Generate static params for all products
-export async function generateStaticParams() {
-  const products = getAllProducts();
-  return products.map((product) => ({
-    slug: product.slug,
-  }));
-}
+// Force dynamic rendering - CRITICAL: prevents build-time prerendering
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+export const runtime = "nodejs";
 
-// Metadata for SEO (UPDATED for Next.js 15+)
+// Type for page props in Next.js 15+
+type ProductPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+// Generate metadata for SEO
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params; // Await params
-  const product = getProductBySlug(slug);
+}: ProductPageProps): Promise<Metadata> {
+  try {
+    const { slug } = await params;
+    const product = getProductBySlug(slug);
 
-  if (!product) return { title: "Product Not Found" };
+    if (!product) {
+      return {
+        title: "Product Not Found | TRITON Interactive",
+        description: "The requested product could not be found.",
+      };
+    }
 
-  return {
-    title: `${product.name} | TRITON Interactive`,
-    description: product.description,
-  };
+    return {
+      title: `${product.name} | TRITON Interactive`,
+      description: product.description,
+      openGraph: {
+        title: product.name,
+        description: product.description,
+        images: product.images?.[0] ? [product.images[0]] : [],
+      },
+    };
+  } catch (error) {
+    console.error("Error generating metadata:", error);
+    return {
+      title: "Product | TRITON Interactive",
+      description: "TRITON Interactive product page",
+    };
+  }
 }
 
-// Main component (UPDATED for Next.js 15+)
-export default async function ProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params; // Await params
-  const product = getProductBySlug(slug);
+// Duplicate generateMetadata removed (first implementation above is used).
 
-  if (!product) {
+// Main page component
+export default async function ProductPage({ params }: ProductPageProps) {
+  let product;
+  try {
+    const { slug } = await params;
+    product = getProductBySlug(slug);
+
+    if (!product) {
+      notFound();
+    }
+  } catch (error) {
+    console.error("Error rendering product page:", error);
     notFound();
   }
 
