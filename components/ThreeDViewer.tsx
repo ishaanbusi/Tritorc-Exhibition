@@ -1,16 +1,25 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import React, { Suspense, useEffect, useState, useRef } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import {
   OrbitControls,
   useGLTF,
   Environment,
   ContactShadows,
   Html,
+  PerspectiveCamera,
 } from "@react-three/drei";
-import { motion } from "framer-motion";
-import { Maximize2, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Maximize2,
+  RotateCw,
+  ZoomIn,
+  ZoomOut,
+  X,
+  Minimize2,
+} from "lucide-react";
+import * as THREE from "three";
 
 interface ThreeDViewerProps {
   modelPath: string;
@@ -19,7 +28,59 @@ interface ThreeDViewerProps {
 
 function Model({ url }: { url: string }) {
   const { scene } = useGLTF(url);
-  return <primitive object={scene} scale={1.5} />;
+
+  // Center and scale the model
+  useEffect(() => {
+    if (scene) {
+      const box = new THREE.Box3().setFromObject(scene);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 2.5 / maxDim;
+
+      scene.position.sub(center);
+      scene.scale.set(scale, scale, scale);
+    }
+  }, [scene]);
+
+  return <primitive object={scene} />;
+}
+
+function LoadingSpinner() {
+  return (
+    <Html center>
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-12 h-12 border-4 border-gray-700 border-t-[#D6212F] rounded-full animate-spin" />
+        <p className="text-white text-sm font-medium">Loading 3D Model...</p>
+      </div>
+    </Html>
+  );
+}
+
+function CameraController({ controlsRef, onUpdate }: any) {
+  const { camera } = useThree();
+  const orbitRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (orbitRef.current && controlsRef) {
+      controlsRef.current = orbitRef.current;
+    }
+  }, [controlsRef]);
+
+  return (
+    <OrbitControls
+      ref={orbitRef}
+      args={[camera]}
+      enableZoom
+      enablePan
+      enableRotate
+      minDistance={3}
+      maxDistance={15}
+      autoRotate
+      autoRotateSpeed={0.5}
+      onChange={onUpdate}
+    />
+  );
 }
 
 export default function ThreeDViewer({
@@ -27,6 +88,10 @@ export default function ThreeDViewer({
   productName,
 }: ThreeDViewerProps) {
   const [modelAvailable, setModelAvailable] = useState<boolean | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const controlsRef = useRef<any>(null);
 
   useEffect(() => {
     if (!modelPath) {
@@ -36,9 +101,8 @@ export default function ThreeDViewer({
     let alive = true;
     (async () => {
       try {
-        // Fetch HEAD or small GET to validate resource (avoid parsing)
         const res = await fetch(modelPath, {
-          method: "GET",
+          method: "HEAD",
           cache: "no-store",
         });
         if (!alive) return;
@@ -47,14 +111,6 @@ export default function ThreeDViewer({
           setModelAvailable(false);
           return;
         }
-        // optionally check size header
-        const length = res.headers.get("content-length");
-        if (length !== null && parseInt(length, 10) === 0) {
-          console.warn("Model response empty (content-length = 0)");
-          setModelAvailable(false);
-          return;
-        }
-        // mark available
         setModelAvailable(true);
       } catch (e) {
         console.warn("Model fetch error:", e);
@@ -69,7 +125,6 @@ export default function ThreeDViewer({
   useEffect(() => {
     if (modelAvailable) {
       try {
-        // preload model for smoother Suspense load
         useGLTF.preload(modelPath);
       } catch (e) {
         console.warn("useGLTF.preload failed:", e);
@@ -77,80 +132,234 @@ export default function ThreeDViewer({
     }
   }, [modelAvailable, modelPath]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setShowInstructions(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleZoomIn = () => {
+    if (controlsRef.current) {
+      const controls = controlsRef.current;
+      const camera = controls.object;
+      const distance = camera.position.distanceTo(controls.target);
+      const newDistance = Math.max(distance * 0.8, controls.minDistance);
+
+      const direction = new THREE.Vector3();
+      direction.subVectors(camera.position, controls.target).normalize();
+      camera.position
+        .copy(controls.target)
+        .add(direction.multiplyScalar(newDistance));
+      controls.update();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (controlsRef.current) {
+      const controls = controlsRef.current;
+      const camera = controls.object;
+      const distance = camera.position.distanceTo(controls.target);
+      const newDistance = Math.min(distance * 1.25, controls.maxDistance);
+
+      const direction = new THREE.Vector3();
+      direction.subVectors(camera.position, controls.target).normalize();
+      camera.position
+        .copy(controls.target)
+        .add(direction.multiplyScalar(newDistance));
+      controls.update();
+    }
+  };
+
+  const handleReset = () => {
+    if (controlsRef.current) {
+      const controls = controlsRef.current;
+      controls.reset();
+      setAutoRotate(true);
+    }
+  };
+
+  const handleInteraction = () => {
+    if (autoRotate) {
+      setAutoRotate(false);
+    }
+  };
+
   if (modelAvailable === false) {
     return (
-      <div className="relative w-full h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden shadow-lg flex items-center justify-center">
-        <div className="text-sm text-red-600 bg-white/80 px-4 py-2 rounded">
-          Model not found or invalid.
+      <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] bg-gradient-to-br from-gray-950 to-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg flex items-center justify-center">
+        <div className="text-center p-6">
+          <div className="w-16 h-16 bg-gray-900 border border-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg
+              className="w-8 h-8 text-gray-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <p className="text-sm sm:text-base text-gray-400 font-medium">
+            3D Model not available
+          </p>
+          <p className="text-xs text-gray-600 mt-2">Please check back later</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="relative w-full h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden shadow-lg">
+  const ViewerCanvas = ({ fullscreen = false }: { fullscreen?: boolean }) => (
+    <div
+      className={`relative w-full ${
+        fullscreen ? "h-full" : "h-[400px] sm:h-[500px] lg:h-[600px]"
+      } bg-gradient-to-br from-gray-950 to-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-lg`}
+    >
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
+        camera={{ position: [0, 0, 8], fov: 50 }}
         gl={{ antialias: true, alpha: true }}
+        onPointerDown={handleInteraction}
       >
-        {/* Lighting */}
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        <spotLight position={[-10, 10, 10]} angle={0.3} intensity={0.5} />
+        <PerspectiveCamera makeDefault position={[0, 0, 8]} />
 
-        <Environment preset="studio" />
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[10, 10, 5]} intensity={1.2} castShadow />
+        <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+        <spotLight position={[-10, 10, 10]} angle={0.3} intensity={0.8} />
+        <pointLight position={[0, 5, 0]} intensity={0.5} />
+
+        <Environment preset="city" />
         <ContactShadows
           position={[0, -1.4, 0]}
-          opacity={0.5}
+          opacity={0.4}
           scale={10}
-          blur={2}
+          blur={2.5}
           far={4}
         />
 
-        <Suspense fallback={<Html center>Loading model…</Html>}>
+        <Suspense fallback={<LoadingSpinner />}>
           {modelAvailable ? (
             <Model url={modelPath} />
           ) : (
-            <Html center>Checking model…</Html>
+            <Html center>
+              <div className="text-white text-sm">Checking model…</div>
+            </Html>
           )}
         </Suspense>
 
-        <OrbitControls
-          enableZoom
-          enablePan
-          enableRotate
-          minDistance={2}
-          maxDistance={10}
-          autoRotate
-          autoRotateSpeed={0.5}
+        <CameraController
+          controlsRef={controlsRef}
+          onUpdate={handleInteraction}
         />
       </Canvas>
 
       {/* Control Panel */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg flex items-center gap-4">
-        <button className="hover:text-primary transition">
-          <RotateCw className="w-5 h-5" />
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-sm border border-gray-800 rounded-full px-4 sm:px-6 py-2.5 sm:py-3 shadow-lg flex items-center gap-3 sm:gap-4">
+        <button
+          onClick={handleReset}
+          className="hover:text-[#D6212F] transition text-gray-400 hover:scale-110 active:scale-95"
+          aria-label="Reset view"
+          title="Reset view"
+        >
+          <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
-        <button className="hover:text-primary transition">
-          <ZoomIn className="w-5 h-5" />
+        <div className="w-px h-5 bg-gray-700" />
+        <button
+          onClick={handleZoomIn}
+          className="hover:text-[#D6212F] transition text-gray-400 hover:scale-110 active:scale-95"
+          aria-label="Zoom in"
+          title="Zoom in"
+        >
+          <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
-        <button className="hover:text-primary transition">
-          <ZoomOut className="w-5 h-5" />
+        <button
+          onClick={handleZoomOut}
+          className="hover:text-[#D6212F] transition text-gray-400 hover:scale-110 active:scale-95"
+          aria-label="Zoom out"
+          title="Zoom out"
+        >
+          <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
-        <button className="hover:text-primary transition">
-          <Maximize2 className="w-5 h-5" />
-        </button>
+        <div className="w-px h-5 bg-gray-700" />
+        {!fullscreen && (
+          <button
+            onClick={() => setIsFullscreen(true)}
+            className="hover:text-[#D6212F] transition text-gray-400 hover:scale-110 active:scale-95"
+            aria-label="Fullscreen"
+            title="Fullscreen"
+          >
+            <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        )}
+        {fullscreen && (
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="hover:text-[#D6212F] transition text-gray-400 hover:scale-110 active:scale-95"
+            aria-label="Exit fullscreen"
+            title="Exit fullscreen"
+          >
+            <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+        )}
       </div>
 
+      {/* Auto-rotate indicator */}
+      {autoRotate && (
+        <div className="absolute top-4 right-4 bg-gray-900/90 backdrop-blur-sm border border-gray-800 text-gray-400 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg flex items-center gap-2">
+          <div className="w-2 h-2 bg-[#D6212F] rounded-full animate-pulse" />
+          Auto-rotating
+        </div>
+      )}
+
       {/* Instructions */}
-      <motion.div
-        initial={{ opacity: 1 }}
-        animate={{ opacity: 0 }}
-        transition={{ delay: 3 }}
-        className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-full text-sm"
-      >
-        Click and drag to rotate • Scroll to zoom
-      </motion.div>
+      <AnimatePresence>
+        {showInstructions && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-sm border border-gray-800 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium shadow-lg max-w-[90%] text-center"
+          >
+            <span className="hidden sm:inline">
+              Click and drag to rotate • Scroll to zoom
+            </span>
+            <span className="sm:hidden">Drag to rotate • Pinch to zoom</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+
+  return (
+    <>
+      <ViewerCanvas />
+
+      {/* Fullscreen Modal */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="absolute top-4 right-4 bg-gray-900/90 hover:bg-gray-800 border border-gray-700 text-white p-3 rounded-full shadow-lg transition z-10"
+              aria-label="Close fullscreen"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="w-full h-full max-w-7xl">
+              <ViewerCanvas fullscreen />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

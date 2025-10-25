@@ -46,10 +46,12 @@ export default function HomePage() {
       <OfflineIndicator />
       <MemoryManager />
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-red-50 to-orange-50 border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 py-20">
+        <section className="relative overflow-hidden border-b border-gray-800">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#D6212F]/5 via-transparent to-transparent" />
+
+          <div className="max-w-7xl mx-auto px-4 py-20 relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -63,10 +65,10 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="mb-8"
               >
-                <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-4">
-                  TRITON<span className="text-primary">K</span>
+                <h1 className="text-6xl md:text-7xl font-bold text-white mb-4">
+                  TRITON<span className="text-[#D6212F]">K</span>
                 </h1>
-                <p className="text-xl text-gray-600 font-semibold">
+                <p className="text-xl text-gray-400 font-semibold">
                   Interactive Product Experience
                 </p>
               </motion.div>
@@ -76,15 +78,15 @@ export default function HomePage() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 max-w-2xl mx-auto shadow-xl mb-12"
+                className="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-8 max-w-2xl mx-auto shadow-2xl mb-12 hover:border-[#D6212F]/50 transition-colors duration-300"
               >
                 <div className="flex items-center justify-center gap-4 mb-4">
-                  <QrCode className="w-12 h-12 text-primary" />
+                  <QrCode className="w-12 h-12 text-[#D6212F]" />
                   <div className="text-left">
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-white">
                       Scan to Explore
                     </h2>
-                    <p className="text-gray-600">
+                    <p className="text-gray-400">
                       Point your camera at any product QR code
                     </p>
                   </div>
@@ -101,29 +103,35 @@ export default function HomePage() {
                 transition={{ delay: 0.6 }}
                 className="flex flex-wrap justify-center gap-4"
               >
-                <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-yellow-500" />
-                  <span className="font-semibold">Interactive 3D</span>
+                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:border-[#D6212F]/50 transition-colors">
+                  <Zap className="w-5 h-5 text-[#D6212F]" />
+                  <span className="font-semibold text-gray-200">
+                    Interactive 3D
+                  </span>
                 </div>
-                <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-blue-500" />
-                  <span className="font-semibold">AR View</span>
+                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:border-[#D6212F]/50 transition-colors">
+                  <Shield className="w-5 h-5 text-[#D6212F]" />
+                  <span className="font-semibold text-gray-200">AR View</span>
                 </div>
-                <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
-                  <Award className="w-5 h-5 text-green-500" />
-                  <span className="font-semibold">AI Assistant</span>
+                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:border-[#D6212F]/50 transition-colors">
+                  <Award className="w-5 h-5 text-[#D6212F]" />
+                  <span className="font-semibold text-gray-200">
+                    AI Assistant
+                  </span>
                 </div>
-                <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-purple-500" />
-                  <span className="font-semibold">Offline Ready</span>
+                <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:border-[#D6212F]/50 transition-colors">
+                  <Clock className="w-5 h-5 text-[#D6212F]" />
+                  <span className="font-semibold text-gray-200">
+                    Offline Ready
+                  </span>
                 </div>
               </motion.div>
             </motion.div>
           </div>
 
           {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -z-10" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#D6212F]/10 rounded-full blur-3xl -z-10" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#D6212F]/5 rounded-full blur-3xl -z-10" />
         </section>
 
         {/* Search & Filter Section */}
@@ -135,13 +143,13 @@ export default function HomePage() {
           >
             {/* Search Bar */}
             <div className="relative mb-8">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search products by name, model, or specifications..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-white rounded-xl shadow-lg border-2 border-transparent focus:border-primary focus:outline-none transition text-lg"
+                className="w-full pl-12 pr-4 py-4 bg-gray-900/50 backdrop-blur-sm text-white placeholder-gray-500 rounded-xl shadow-lg border-2 border-gray-800 focus:border-[#D6212F] focus:outline-none transition text-lg"
               />
             </div>
 
@@ -153,8 +161,8 @@ export default function HomePage() {
                   onClick={() => setSelectedCategory(category)}
                   className={`px-6 py-2 rounded-full font-semibold transition ${
                     selectedCategory === category
-                      ? "bg-primary text-white shadow-lg"
-                      : "bg-white text-gray-700 hover:bg-gray-100 shadow"
+                      ? "bg-[#D6212F] text-white shadow-lg shadow-[#D6212F]/20"
+                      : "bg-gray-900/50 text-gray-300 hover:bg-gray-800/50 border border-gray-800 hover:border-gray-700"
                   }`}
                 >
                   {category}
@@ -163,9 +171,9 @@ export default function HomePage() {
             </div>
 
             {/* Results Count */}
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-400 mb-6">
               Showing{" "}
-              <span className="font-bold text-gray-900">
+              <span className="font-bold text-white">
                 {filteredProducts.length}
               </span>{" "}
               {filteredProducts.length === 1 ? "product" : "products"}
@@ -189,10 +197,10 @@ export default function HomePage() {
               className="text-center py-20"
             >
               <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              <h3 className="text-2xl font-bold text-white mb-2">
                 No products found
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-400 mb-6">
                 Try adjusting your search or filters
               </p>
               <button
@@ -200,7 +208,7 @@ export default function HomePage() {
                   setSearchQuery("");
                   setSelectedCategory("All");
                 }}
-                className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition"
+                className="bg-[#D6212F] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#B51D27] transition"
               >
                 Clear Filters
               </button>
@@ -209,7 +217,7 @@ export default function HomePage() {
         </section>
 
         {/* CTA Section */}
-        <section className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-20">
+        <section className="bg-gradient-to-r from-gray-950 to-gray-900 border-t border-gray-800 text-white py-20">
           <div className="max-w-4xl mx-auto px-4 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -219,21 +227,21 @@ export default function HomePage() {
               <h2 className="text-4xl font-bold mb-6">
                 Need Help Choosing the Right Tool?
               </h2>
-              <p className="text-xl text-gray-300 mb-8">
+              <p className="text-xl text-gray-400 mb-8">
                 Our team of experts is ready to assist you with product
                 selection, technical specifications, and custom solutions.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/quote"
-                  className="bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-xl font-bold text-lg transition inline-flex items-center justify-center gap-2"
+                  className="bg-[#D6212F] hover:bg-[#B51D27] text-white px-8 py-4 rounded-xl font-bold text-lg transition inline-flex items-center justify-center gap-2 shadow-lg shadow-[#D6212F]/20"
                 >
                   Request a Quote
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <a
                   href="mailto:sales@triton.com"
-                  className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold text-lg transition border-2 border-white/30"
+                  className="bg-gray-800/50 hover:bg-gray-800 text-white px-8 py-4 rounded-xl font-bold text-lg transition border-2 border-gray-700 hover:border-[#D6212F]/50"
                 >
                   Contact Sales
                 </a>
@@ -257,9 +265,9 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       className="group"
     >
       <Link href={`/product/${product.slug}`}>
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-shadow hover:shadow-2xl">
+        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl shadow-lg overflow-hidden transition-all hover:shadow-2xl hover:shadow-[#D6212F]/10 hover:border-[#D6212F]/50">
           {/* Product Image */}
-          <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+          <div className="relative aspect-[4/3] overflow-hidden bg-gray-950">
             <Image
               src={product.images[0]}
               alt={product.name}
@@ -268,17 +276,17 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             />
 
             {/* QR Badge */}
-            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg">
-              <QrCode className="w-5 h-5 text-primary" />
+            <div className="absolute top-4 right-4 bg-gray-900/90 backdrop-blur-sm border border-gray-800 p-2 rounded-lg shadow-lg">
+              <QrCode className="w-5 h-5 text-[#D6212F]" />
             </div>
 
             {/* Category Badge */}
-            <div className="absolute top-4 left-4 bg-primary/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-semibold">
+            <div className="absolute top-4 left-4 bg-[#D6212F]/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-semibold">
               {product.category}
             </div>
 
             {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#D6212F]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
               <span className="text-white font-bold text-lg flex items-center gap-2">
                 View Details
                 <ArrowRight className="w-5 h-5" />
@@ -288,19 +296,22 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
           {/* Product Info */}
           <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary transition">
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#D6212F] transition">
               {product.name}
             </h3>
-            <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+            <p className="text-gray-400 text-sm mb-4 line-clamp-2">
               {product.description}
             </p>
 
             {/* Quick Specs */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               {product.specifications.slice(0, 2).map((spec, idx) => (
-                <div key={idx} className="bg-gray-50 rounded-lg p-2">
+                <div
+                  key={idx}
+                  className="bg-gray-950/50 border border-gray-800 rounded-lg p-2"
+                >
                   <p className="text-xs text-gray-500">{spec.label}</p>
-                  <p className="text-sm font-bold text-gray-900">
+                  <p className="text-sm font-bold text-white">
                     {spec.value} {spec.unit}
                   </p>
                 </div>
@@ -312,13 +323,13 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
               {product.features.slice(0, 2).map((feature, idx) => (
                 <span
                   key={idx}
-                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full"
+                  className="text-xs bg-[#D6212F]/10 text-[#D6212F] border border-[#D6212F]/20 px-3 py-1 rounded-full"
                 >
                   {feature}
                 </span>
               ))}
               {product.features.length > 2 && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                <span className="text-xs bg-gray-800/50 text-gray-400 border border-gray-700 px-3 py-1 rounded-full">
                   +{product.features.length - 2} more
                 </span>
               )}
