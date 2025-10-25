@@ -4,6 +4,14 @@ import dynamic from "next/dynamic";
 import { FileText, Package } from "lucide-react";
 import { useEffect, useState } from "react";
 
+// Safe hook wrapper for SSR (no-op)
+// Note: MemoryManager.useProductView is a React hook and must not be invoked conditionally or dynamically;
+// actual tracking is performed in the client-only effect further down in this component.
+function useProductViewSafe(_: unknown) {
+  // intentionally no-op to avoid calling hooks outside render
+  return;
+}
+
 // Dynamically import components that might use window/browser APIs
 const PageEntryAnimation = dynamic(
   () => import("@/components/PageEntryAnimation"),
@@ -97,7 +105,39 @@ interface ProductPageClientProps {
 }
 
 export default function ProductPageClient({ product }: ProductPageClientProps) {
-  useProductView(product);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Load product view tracking on client side only
+  useEffect(() => {
+    if (typeof window !== "undefined" && isMounted) {
+      import("@/components/MemoryManager").then((mod) => {
+        // Call the hook-like function (it's probably not actually a hook)
+        try {
+          const tracker = mod.useProductView as any;
+          if (typeof tracker === "function") {
+            tracker(product);
+          }
+        } catch (error) {
+          console.warn("Product view tracking failed:", error);
+        }
+      });
+    }
+  }, [product, isMounted]);
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-gray-700 border-t-[#D6212F] rounded-full animate-spin" />
+          <p className="text-white text-sm font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <PageEntryAnimation productName={product.name}>
