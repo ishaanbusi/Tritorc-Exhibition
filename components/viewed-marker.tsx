@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect } from "react";
 import { useMemory } from "./MemoryManager";
 
@@ -11,7 +12,7 @@ export default function ViewedMarker({
   name: string;
   model?: string;
 }) {
-  const { add } = useMemory();
+  const { addView } = useMemory();
 
   useEffect(() => {
     if (!slug) return;
@@ -23,9 +24,15 @@ export default function ViewedMarker({
 
     // Defer to next microtask to avoid any hydration ordering issues
     queueMicrotask(() => {
-      add({ slug, name, model, image: `/images/${slug}.jpg` });
+      addView({
+        id: slug,
+        slug,
+        name,
+        images: [`/images/${slug}.jpg`],
+        category: model,
+      });
     });
-  }, [slug, name, model, add]);
+  }, [slug, name, model, addView]);
 
   return null;
 }

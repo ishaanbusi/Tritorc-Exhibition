@@ -13,16 +13,20 @@ import AskAIChat from "@/components/AskAIChat";
 import ExplodedView from "@/components/ExplodedView";
 import { useProductView } from "@/components/MemoryManager";
 
-export default function ProductPageClient({ product }) {
-  useProductView(product); // Track view in memory
+interface ProductPageClientProps {
+  product: any;
+}
+
+export default function ProductPageClient({ product }: ProductPageClientProps) {
+  useProductView(product);
 
   return (
     <PageEntryAnimation productName={product.name}>
-      <AmbientBackground theme="hydraulic" />
+      <AmbientBackground />
 
       <div className="max-w-7xl mx-auto px-4 py-12 space-y-16">
         {/* Hero Section */}
-        <section className="grid grid-cols-2 gap-8">
+        <section className="grid md:grid-cols-2 gap-8">
           <ImageGallery
             images={product.images}
             productName={product.name}
@@ -35,7 +39,9 @@ export default function ProductPageClient({ product }) {
 
             {/* Action Buttons */}
             <div className="flex gap-4 mb-6">
-              <button className="btn-primary">Request Quote</button>
+              <button className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                Request Quote
+              </button>
               <ComparisonSelect currentProduct={product} />
             </div>
 
@@ -57,7 +63,9 @@ export default function ProductPageClient({ product }) {
         </section>
 
         {/* Videos */}
-        <VideoSection videos={product.videos} productName={product.name} />
+        {product.videos && (
+          <VideoSection videos={product.videos} productName={product.name} />
+        )}
 
         {/* Specifications */}
         <SpecificationsTabs product={product} />
@@ -66,13 +74,15 @@ export default function ProductPageClient({ product }) {
         <TorqueChart product={product} />
 
         {/* Exploded View */}
-        <section>
-          <h2 className="text-3xl font-bold mb-6">Component Breakdown</h2>
-          <ExplodedView
-            modelPath={product.model3D}
-            parts={product.components}
-          />
-        </section>
+        {product.components && (
+          <section>
+            <h2 className="text-3xl font-bold mb-6">Component Breakdown</h2>
+            <ExplodedView
+              modelPath={product.model3D}
+              parts={product.components}
+            />
+          </section>
+        )}
       </div>
 
       {/* Floating Features */}

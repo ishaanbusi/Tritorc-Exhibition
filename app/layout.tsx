@@ -1,12 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-
-// Global components
-import AmbientBackground from "@/components/AmbientBackground";
-import SoundManager from "@/components/SoundManager";
-import { MemoryProvider } from "@/components/MemoryManager";
-import OfflineIndicator from "@/components/OfflineIndicator";
-import SWRegister from "@/components/SWRegister";
+import ClientProviders from "@/components/ClientProviders";
 
 export const metadata: Metadata = {
   title: "TRITONK Interactive",
@@ -15,19 +9,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
       <body>
-        <AmbientBackground />
-        <SoundManager />
-        <MemoryProvider>
-          {children}
-          <OfflineIndicator />
-        </MemoryProvider>
-        <SWRegister />
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );

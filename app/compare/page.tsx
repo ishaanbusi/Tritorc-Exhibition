@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getProductById } from "@/data/products";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 
-export default function ComparePage() {
+function CompareContent() {
   const searchParams = useSearchParams();
   const ids = searchParams.get("ids")?.split(",") || [];
   const products = ids
@@ -73,7 +74,6 @@ export default function ComparePage() {
                     key={product.id}
                     className="px-6 py-4 text-center font-bold"
                   >
-                    {/* show name as string; if images is array, use first image */}
                     {product.name}
                   </th>
                 ))}
@@ -83,7 +83,9 @@ export default function ComparePage() {
               {/* Get all unique spec labels */}
               {Array.from(
                 new Set(
-                  products.flatMap((p) => p.specifications.map((s) => s.label))
+                  products.flatMap(
+                    (p) => p.specifications?.map((s) => s.label) || []
+                  )
                 )
               ).map((label, index) => (
                 <tr
@@ -94,14 +96,14 @@ export default function ComparePage() {
                     {label}
                   </td>
                   {products.map((product) => {
-                    const spec = product.specifications.find(
+                    const spec = product.specifications?.find(
                       (s) => s.label === label
                     );
                     return (
                       <td key={product.id} className="px-6 py-4 text-center">
                         {spec ? (
                           <span className="font-semibold">
-                            {spec.value} {spec.unit}
+                            {spec.value} {spec.unit || ""}
                           </span>
                         ) : (
                           <span className="text-gray-400">—</span>
@@ -116,25 +118,44 @@ export default function ComparePage() {
         </div>
 
         {/* Features Comparison */}
-        <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-2xl font-bold mb-6">Features</h3>
-          <div className="grid grid-cols-3 gap-6">
-            {products.map((product) => (
-              <div key={product.id}>
-                <h4 className="font-semibold mb-4">{product.name}</h4>
-                <ul className="space-y-2">
-                  {product.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+        {products.some((p) => p.features && p.features.length > 0) && (
+          <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-2xl font-bold mb-6">Features</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <div key={product.id}>
+                  <h4 className="font-semibold mb-4">{product.name}</h4>
+                  <ul className="space-y-2">
+                    {(product.features || []).map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
+  );
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading comparison...</p>
+          </div>
+        </div>
+      }
+    >
+      <CompareContent />
+    </Suspense>
   );
 }

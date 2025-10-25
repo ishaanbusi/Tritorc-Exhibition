@@ -8,6 +8,7 @@ interface ARViewerProps {
   modelPath: string; // .glb for Android
   modelPathIOS: string; // .usdz for iOS
   productName: string;
+  poster?: string;
 }
 
 export default function ARViewer({
@@ -68,14 +69,15 @@ export default function ARViewer({
 
       {/* Android Model Viewer */}
       {!isIOS && (
+        // @ts-ignore - model-viewer is a custom element
         <model-viewer
           src={modelPath}
           ar
           ar-modes="scene-viewer webxr quick-look"
           camera-controls
           auto-rotate
-          shadow-intensity="1"
-          className="hidden"
+          loading="eager"
+          alt={productName}
         />
       )}
 

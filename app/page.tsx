@@ -41,7 +41,7 @@ export default function HomePage() {
 
   return (
     <>
-      <AmbientBackground theme="hydraulic" />
+      <AmbientBackground />
       <SoundManager enabled={true} />
       <OfflineIndicator />
       <MemoryManager />

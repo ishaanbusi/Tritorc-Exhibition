@@ -3,12 +3,27 @@
 import { useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Html } from "@react-three/drei";
-import { motion } from "framer-motion";
 import { Layers, RotateCcw } from "lucide-react";
+
+interface Part {
+  id?: string;
+  name: string;
+  description?: string;
+  position?: [number, number, number];
+  [key: string]: unknown;
+}
 
 interface ExplodedViewProps {
   modelPath: string;
-  parts?: { id?: string; name: string; [key: string]: any }[];
+  parts?: Part[];
+}
+
+interface ExplodedModelProps {
+  modelPath: string;
+  exploded: boolean;
+  selectedPart: number | null;
+  onSelectPart: (index: number) => void;
+  parts: Part[];
 }
 
 function ExplodedModel({
@@ -16,7 +31,8 @@ function ExplodedModel({
   exploded,
   selectedPart,
   onSelectPart,
-}: any) {
+  parts,
+}: ExplodedModelProps) {
   const { scene } = useGLTF(modelPath);
 
   return (
@@ -30,16 +46,16 @@ function ExplodedModel({
         return (
           <group
             key={index}
-            position={offset}
+            position={offset as [number, number, number]}
             onClick={() => onSelectPart(index)}
           >
             <primitive object={child.clone()} scale={isSelected ? 1.1 : 1} />
-            {isSelected && exploded && (
+            {isSelected && exploded && parts[index] && (
               <Html position={[0, 1, 0]}>
                 <div className="bg-white rounded-lg shadow-xl p-4 min-w-[200px] -translate-x-1/2">
                   <h4 className="font-bold mb-2">{parts[index]?.name}</h4>
                   <p className="text-sm text-gray-600">
-                    {parts[index]?.description}
+                    {parts[index]?.description || "No description available"}
                   </p>
                 </div>
               </Html>
@@ -70,6 +86,7 @@ export default function ExplodedView({
           exploded={exploded}
           selectedPart={selectedPart}
           onSelectPart={setSelectedPart}
+          parts={parts}
         />
         <OrbitControls enableZoom={true} />
       </Canvas>
@@ -79,7 +96,7 @@ export default function ExplodedView({
         <button
           onClick={() => setExploded(!exploded)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full transition ${
-            exploded ? "bg-primary text-white" : "hover:bg-gray-100"
+            exploded ? "bg-blue-600 text-white" : "hover:bg-gray-100"
           }`}
         >
           <Layers className="w-5 h-5" />
@@ -104,7 +121,11 @@ export default function ExplodedView({
               <li
                 key={part.id ?? index}
                 onClick={() => setSelectedPart(index)}
-                className="cursor-pointer"
+                className={`cursor-pointer text-sm px-3 py-2 rounded-lg transition ${
+                  selectedPart === index
+                    ? "bg-blue-100 text-blue-700 font-medium"
+                    : "hover:bg-gray-100"
+                }`}
               >
                 {part.name}
               </li>

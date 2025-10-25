@@ -22,10 +22,10 @@ interface TorqueChartProps {
 export default function TorqueChart({ product }: TorqueChartProps) {
   // Generate chart data from product specs
   const generateTorqueData = () => {
-    const minTorque = product.specifications.find((s) =>
+    const minTorque = product.specifications?.find((s) =>
       s.label.includes("Min Torque")
     );
-    const maxTorque = product.specifications.find((s) =>
+    const maxTorque = product.specifications?.find((s) =>
       s.label.includes("Max Torque")
     );
 
@@ -43,6 +43,11 @@ export default function TorqueChart({ product }: TorqueChartProps) {
   };
 
   const data = generateTorqueData();
+
+  // Don't render if no data
+  if (data.length === 0) {
+    return null;
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
@@ -106,10 +111,16 @@ export default function TorqueChart({ product }: TorqueChartProps) {
           <h4 className="font-bold mb-4">Variant Comparison</h4>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart
-              data={product.variants.map((v) => ({
-                name: v.name,
-                value: parseFloat(v.specs?.value || "0"),
-              }))}
+              data={product.variants.map((v) => {
+                // Find the first spec with a numeric value
+                const firstSpec = v.specs?.find(
+                  (s) => !isNaN(parseFloat(s.value))
+                );
+                return {
+                  name: v.name,
+                  value: firstSpec ? parseFloat(firstSpec.value) : 0,
+                };
+              })}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
@@ -122,23 +133,25 @@ export default function TorqueChart({ product }: TorqueChartProps) {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-        {product.specifications.slice(0, 3).map((spec, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 * index }}
-            className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg"
-          >
-            <div className="text-sm text-gray-600 mb-1">{spec.label}</div>
-            <div className="text-2xl font-bold text-primary">
-              {spec.value}
-              <span className="text-sm text-gray-600 ml-1">{spec.unit}</span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {product.specifications && product.specifications.length > 0 && (
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+          {product.specifications.slice(0, 3).map((spec, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 * index }}
+              className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg"
+            >
+              <div className="text-sm text-gray-600 mb-1">{spec.label}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {spec.value}
+                <span className="text-sm text-gray-600 ml-1">{spec.unit}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
