@@ -63,11 +63,13 @@ export default function HomePage() {
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="mb-8"
+                className="mb-8 flex flex-col items-center"
               >
-                <h1 className="text-6xl md:text-7xl font-bold text-white mb-4">
-                  TRITON<span className="text-[#D6212F]">K</span>
-                </h1>
+                <img
+                  src="/logo.png"
+                  alt="Tritorc Logo"
+                  className="w-48 md:w-64 mb-4"
+                />
                 <p className="text-xl text-gray-400 font-semibold">
                   Interactive Product Experience
                 </p>
