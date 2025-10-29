@@ -1,15 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { Maximize2, X } from "lucide-react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Zoom } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import "swiper/css/zoom";
 
 interface ImageGalleryProps {
   images: string[];
@@ -28,88 +21,135 @@ export default function ImageGallery({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [is360Mode, setIs360Mode] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef({ x: 0, rotation: 0 });
+  const isDraggingRef = useRef(false);
 
-  const handle360Drag = (e: React.MouseEvent) => {
-    if (!is360Mode) return;
-    const movement = e.movementX;
-    setRotation((prev) => (prev + movement) % 360);
-  };
+  // Handle scroll snap for mobile
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || is360Mode) return;
 
-  const get360ImageIndex = () => {
+    const handleScroll = () => {
+      const scrollLeft = container.scrollLeft;
+      const itemWidth = container.clientWidth;
+      const index = Math.round(scrollLeft / itemWidth);
+      setSelectedIndex(index);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [is360Mode]);
+
+  // 360 rotation handlers
+  const handle360Start = useCallback(
+    (clientX: number) => {
+      isDraggingRef.current = true;
+      dragStartRef.current = { x: clientX, rotation };
+    },
+    [rotation]
+  );
+
+  const handle360Move = useCallback(
+    (clientX: number) => {
+      if (!isDraggingRef.current || !is360Mode) return;
+      const deltaX = clientX - dragStartRef.current.x;
+      const newRotation = (dragStartRef.current.rotation + deltaX * 0.5) % 360;
+      setRotation(newRotation < 0 ? newRotation + 360 : newRotation);
+    },
+    [is360Mode]
+  );
+
+  const handle360End = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
+
+  const get360ImageIndex = useCallback(() => {
     const totalImages = rotation360Images.length;
     const index = Math.floor((rotation / 360) * totalImages);
     return Math.abs(index) % totalImages;
+  }, [rotation, rotation360Images.length]);
+
+  const scrollToImage = (index: number) => {
+    if (scrollRef.current) {
+      const itemWidth = scrollRef.current.clientWidth;
+      scrollRef.current.scrollTo({
+        left: index * itemWidth,
+        behavior: "smooth",
+      });
+    }
+    setSelectedIndex(index);
   };
+
+  const toggleZoom = () => setIsZoomed(!isZoomed);
 
   return (
     <>
       <div className="relative w-full">
         {/* Main Gallery */}
         <div className="relative aspect-[4/3] bg-gray-950 border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
-          <AnimatePresence mode="wait">
-            {!is360Mode ? (
-              <motion.div
-                key="gallery"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full h-full"
-              >
-                <Swiper
-                  modules={[Navigation, Pagination, Zoom]}
-                  navigation
-                  pagination={{ clickable: true }}
-                  zoom={{ maxRatio: 3 }}
-                  onSlideChange={(swiper) =>
-                    setSelectedIndex(swiper.activeIndex)
-                  }
-                  className="w-full h-full product-swiper-dark"
+          {!is360Mode ? (
+            <div
+              ref={scrollRef}
+              className="w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide flex"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {images.map((image, index) => (
+                <div
+                  key={index}
+                  className="w-full h-full flex-shrink-0 snap-center relative"
+                  onClick={toggleZoom}
                 >
-                  {images.map((image, index) => (
-                    <SwiperSlide key={index}>
-                      <div className="swiper-zoom-container w-full h-full flex items-center justify-center bg-gray-950">
-                        <Image
-                          src={image}
-                          alt={`${productName} - View ${index + 1}`}
-                          fill
-                          className="object-contain"
-                          priority={index === 0}
-                        />
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="360"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full h-full cursor-grab active:cursor-grabbing bg-gray-950"
-                onMouseMove={handle360Drag}
-              >
-                <Image
-                  src={rotation360Images[get360ImageIndex()]}
-                  alt={`${productName} - 360° View`}
-                  fill
-                  className="object-contain pointer-events-none"
-                  draggable={false}
-                />
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-sm border border-gray-700 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-lg">
-                  <span className="hidden sm:inline">Drag to rotate • </span>
-                  {Math.round((rotation / 360) * 100)}%
+                  <Image
+                    src={image}
+                    alt={`${productName} - View ${index + 1}`}
+                    fill
+                    className={`object-contain transition-transform duration-300 ${
+                      isZoomed ? "scale-150 cursor-zoom-out" : "cursor-zoom-in"
+                    }`}
+                    priority={index === 0}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                  />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="w-full h-full cursor-grab active:cursor-grabbing bg-gray-950 relative touch-none"
+              onMouseDown={(e) => handle360Start(e.clientX)}
+              onMouseMove={(e) => handle360Move(e.clientX)}
+              onMouseUp={handle360End}
+              onMouseLeave={handle360End}
+              onTouchStart={(e) => handle360Start(e.touches[0].clientX)}
+              onTouchMove={(e) => handle360Move(e.touches[0].clientX)}
+              onTouchEnd={handle360End}
+            >
+              <Image
+                src={rotation360Images[get360ImageIndex()]}
+                alt={`${productName} - 360° View`}
+                fill
+                className="object-contain pointer-events-none select-none"
+                draggable={false}
+                priority
+              />
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-sm border border-gray-700 text-white px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-lg">
+                <span className="hidden sm:inline">Drag to rotate • </span>
+                {Math.round((rotation / 360) * 100)}%
+              </div>
+            </div>
+          )}
 
           {/* Controls */}
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex gap-2 z-10">
             {enable360 && rotation360Images.length > 0 && (
               <button
-                onClick={() => setIs360Mode(!is360Mode)}
-                className={`p-2 sm:p-2.5 rounded-lg shadow-lg transition ${
+                onClick={() => {
+                  setIs360Mode(!is360Mode);
+                  setIsZoomed(false);
+                }}
+                className={`p-2 sm:p-2.5 rounded-lg shadow-lg transition-colors ${
                   is360Mode
                     ? "bg-[#D6212F] text-white hover:bg-[#B51D27]"
                     : "bg-gray-900/90 text-white hover:bg-gray-800 border border-gray-700"
@@ -129,7 +169,7 @@ export default function ImageGallery({
             )}
             <button
               onClick={() => setIsFullscreen(true)}
-              className="bg-gray-900/90 text-white hover:bg-gray-800 border border-gray-700 p-2 sm:p-2.5 rounded-lg shadow-lg transition"
+              className="bg-gray-900/90 text-white hover:bg-gray-800 border border-gray-700 p-2 sm:p-2.5 rounded-lg shadow-lg transition-colors"
               aria-label="Fullscreen"
             >
               <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -142,6 +182,30 @@ export default function ImageGallery({
               {selectedIndex + 1} / {images.length}
             </div>
           )}
+
+          {/* Navigation Arrows - Desktop */}
+          {!is360Mode && images.length > 1 && (
+            <>
+              <button
+                onClick={() => scrollToImage(Math.max(0, selectedIndex - 1))}
+                disabled={selectedIndex === 0}
+                className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 bg-gray-900/90 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-700 text-white w-10 h-10 items-center justify-center rounded-full shadow-lg transition-colors z-10"
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+              <button
+                onClick={() =>
+                  scrollToImage(Math.min(images.length - 1, selectedIndex + 1))
+                }
+                disabled={selectedIndex === images.length - 1}
+                className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 bg-gray-900/90 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-700 text-white w-10 h-10 items-center justify-center rounded-full shadow-lg transition-colors z-10"
+                aria-label="Next image"
+              >
+                ›
+              </button>
+            </>
+          )}
         </div>
 
         {/* Thumbnail Strip */}
@@ -149,10 +213,10 @@ export default function ImageGallery({
           {images.map((image, index) => (
             <button
               key={index}
-              onClick={() => setSelectedIndex(index)}
-              className={`aspect-square rounded-lg overflow-hidden border-2 transition bg-gray-950 ${
+              onClick={() => scrollToImage(index)}
+              className={`aspect-square rounded-lg overflow-hidden border-2 transition-all bg-gray-950 ${
                 selectedIndex === index
-                  ? "border-[#D6212F] shadow-lg shadow-[#D6212F]/20"
+                  ? "border-[#D6212F] shadow-lg shadow-[#D6212F]/20 scale-105"
                   : "border-gray-800 hover:border-gray-700"
               }`}
               aria-label={`View image ${index + 1}`}
@@ -163,6 +227,7 @@ export default function ImageGallery({
                 width={100}
                 height={100}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </button>
           ))}
@@ -170,115 +235,101 @@ export default function ImageGallery({
       </div>
 
       {/* Fullscreen Modal */}
-      <AnimatePresence>
-        {isFullscreen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setIsFullscreen(false)}
+        >
+          <button
             onClick={() => setIsFullscreen(false)}
+            className="absolute top-4 right-4 bg-gray-900/90 hover:bg-gray-800 border border-gray-700 text-white p-3 rounded-full shadow-lg transition-colors z-10"
+            aria-label="Close fullscreen"
           >
-            <button
-              onClick={() => setIsFullscreen(false)}
-              className="absolute top-4 right-4 bg-gray-900/90 hover:bg-gray-800 border border-gray-700 text-white p-3 rounded-full shadow-lg transition z-10"
-              aria-label="Close fullscreen"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <X className="w-6 h-6" />
+          </button>
 
-            <div
-              className="relative w-full h-full max-w-7xl max-h-[90vh]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {!is360Mode ? (
-                <Swiper
-                  modules={[Navigation, Pagination, Zoom]}
-                  navigation
-                  pagination={{ clickable: true }}
-                  zoom={{ maxRatio: 5 }}
-                  initialSlide={selectedIndex}
-                  onSlideChange={(swiper) =>
-                    setSelectedIndex(swiper.activeIndex)
-                  }
-                  className="w-full h-full product-swiper-dark"
-                >
-                  {images.map((image, index) => (
-                    <SwiperSlide key={index}>
-                      <div className="swiper-zoom-container w-full h-full flex items-center justify-center">
-                        <Image
-                          src={image}
-                          alt={`${productName} - View ${index + 1}`}
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              ) : (
-                <div
-                  className="w-full h-full cursor-grab active:cursor-grabbing"
-                  onMouseMove={handle360Drag}
-                >
-                  <Image
-                    src={rotation360Images[get360ImageIndex()]}
-                    alt={`${productName} - 360° View`}
-                    fill
-                    className="object-contain pointer-events-none"
-                    draggable={false}
-                  />
+          <div
+            className="relative w-full h-full max-w-7xl max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {!is360Mode ? (
+              <div className="relative w-full h-full">
+                <Image
+                  src={images[selectedIndex]}
+                  alt={`${productName} - View ${selectedIndex + 1}`}
+                  fill
+                  className="object-contain"
+                  priority
+                />
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={() =>
+                        setSelectedIndex(Math.max(0, selectedIndex - 1))
+                      }
+                      disabled={selectedIndex === 0}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-gray-900/90 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-700 text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg transition-colors text-2xl"
+                      aria-label="Previous image"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={() =>
+                        setSelectedIndex(
+                          Math.min(images.length - 1, selectedIndex + 1)
+                        )
+                      }
+                      disabled={selectedIndex === images.length - 1}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-gray-900/90 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-700 text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg transition-colors text-2xl"
+                      aria-label="Next image"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-sm border border-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg">
+                  {selectedIndex + 1} / {images.length}
                 </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </div>
+            ) : (
+              <div
+                className="w-full h-full cursor-grab active:cursor-grabbing relative touch-none"
+                onMouseDown={(e) => handle360Start(e.clientX)}
+                onMouseMove={(e) => handle360Move(e.clientX)}
+                onMouseUp={handle360End}
+                onMouseLeave={handle360End}
+                onTouchStart={(e) => handle360Start(e.touches[0].clientX)}
+                onTouchMove={(e) => handle360Move(e.touches[0].clientX)}
+                onTouchEnd={handle360End}
+              >
+                <Image
+                  src={rotation360Images[get360ImageIndex()]}
+                  alt={`${productName} - 360° View`}
+                  fill
+                  className="object-contain pointer-events-none select-none"
+                  draggable={false}
+                  priority
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-      {/* Custom Swiper Styles */}
-      <style jsx global>{`
-        .product-swiper-dark .swiper-button-next,
-        .product-swiper-dark .swiper-button-prev {
-          background: rgba(17, 24, 39, 0.9);
-          backdrop-filter: blur(8px);
-          border: 1px solid rgb(55, 65, 81);
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          color: white;
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
-
-        .product-swiper-dark .swiper-button-next:hover,
-        .product-swiper-dark .swiper-button-prev:hover {
-          background: rgba(31, 41, 55, 0.9);
-          border-color: rgb(75, 85, 99);
-        }
-
-        .product-swiper-dark .swiper-button-next::after,
-        .product-swiper-dark .swiper-button-prev::after {
-          font-size: 16px;
-        }
-
-        .product-swiper-dark .swiper-pagination-bullet {
-          background: rgb(55, 65, 81);
-          opacity: 1;
-        }
-
-        .product-swiper-dark .swiper-pagination-bullet-active {
-          background: #d6212f;
-        }
-
-        @media (max-width: 640px) {
-          .product-swiper-dark .swiper-button-next,
-          .product-swiper-dark .swiper-button-prev {
-            width: 32px;
-            height: 32px;
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
           }
-
-          .product-swiper-dark .swiper-button-next::after,
-          .product-swiper-dark .swiper-button-prev::after {
-            font-size: 14px;
+          to {
+            opacity: 1;
           }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
         }
       `}</style>
     </>
