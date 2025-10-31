@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import ClientProviders from "@/components/ClientProviders";
 
 export const metadata: Metadata = {
-  title: "TRITONK Interactive",
+  title: "TRITORC Interactive",
   description: "Immersive product experience",
 };
 
